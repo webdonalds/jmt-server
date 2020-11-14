@@ -1,0 +1,12 @@
+version: '3'
+services:
+  redis:
+    image: redis:6
+    networks:
+    - jmt-net
+    container_name: jmt-redis
+    ports:
+    - 6379:6379
+
+networks:
+  jmt-net:
