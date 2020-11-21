@@ -2,21 +2,34 @@
 ## List
 
 - `joined`
+- `left`
 - `waiting`
-- `opened`
 - `matched`
+- `opened`
 - `opened`
 
 ### `joined`
 
-유저가 등록되었을 때 발생합니다. `token` 필드의 값은 본인일 때만 반환됩니다.
+신규 유저가 등록되었을 때 발생합니다.
 
 ```json
 {
   "event": "joined",
   "payload": {
-    "nickname": "string",
-    "token": "string?"
+    "token": "string"
+  }
+}
+```
+
+### `left`
+
+유저가 떠났을 때 발생합니다.
+
+```json
+{
+  "event": "left",
+  "payload": {
+    "nickname": "string"
   }
 }
 ```
@@ -29,7 +42,7 @@
 {
   "event": "progressed",
   "payload": {
-    "readiedCount": 123
+    "readied": ["string"]
   }
 }
 ```
@@ -77,40 +90,23 @@
 # Client to Server Events
 ## List
 
-- `join`
-- `rejoin`
+- `register`
 - `ready`
 - `open`
 - `next`
 
-### `join`
+### `register`
 
-유저 정보를 등록합니다. `adminPassword` 필드의 값은 관리자만 포함해야합니다.
+선물 정보를 등록합니다.
 
-응답 이벤트 : `joined`, `progressed`
+응답 이벤트 : `waiting` 혹은 `matched` 혹은 `opened` 혹은 `finished`
 
 ```json
 {
   "event": "join",
   "payload": {
     "nickname": "string",
-    "present": "string",
-    "adminPassword": "string?"
-  }
-}
-```
-
-### `rejoin`
-
-이전에 join한 토큰을 바탕으로 재접속합니다.
-
-응답 이벤트 : `waiting`(아직 공개가 시작되지 않은 경우) 혹은 `matched`(마지막으로 매칭된 선물)
-
-```json
-{
-  "event": "rejoin",
-  "payload": {
-    "token": "string"
+    "present": "string"
   }
 }
 ```
@@ -119,7 +115,7 @@
 
 선물을 확인할 준비가 되었음을 나타냅니다.
 
-응답 이벤트 : `wating`(아직 준비하지 않은 유저가 있는 경우) 혹은 `matched`(모두가 준비 된 경우)
+응답 이벤트 : `waiting`(아직 준비하지 않은 유저가 있는 경우) 혹은 `matched`(모두가 준비 된 경우)
 
 ```json
 {
