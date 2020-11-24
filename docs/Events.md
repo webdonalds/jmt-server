@@ -42,7 +42,8 @@
 {
   "event": "progressed",
   "payload": {
-    "readied": ["string"]
+    "users": ["string"],
+    "readiedUsers": ["string"]
   }
 }
 ```

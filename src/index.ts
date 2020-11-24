@@ -3,9 +3,11 @@ import { createServer, IncomingMessage } from 'http';
 import { Socket } from 'net';
 import WebSocket, { Server } from 'ws';
 import { eventFromMessage, Event, JoinedEvent } from './events';
+import { Repository } from './repository';
 import { SocketService } from './services';
 
 const socketService = new SocketService();
+const repository = new Repository();
 
 const server = createServer();
 const wss = new Server({ noServer: true });
@@ -29,9 +31,12 @@ server.on('upgrade', (req: IncomingMessage, socket: Socket, head: Buffer) => {
 
 wss.on('connection', (ws: WebSocket, _: IncomingMessage, clientId: string) => {
   ws.on('close', () => { socketService.unregister(clientId); });
-  ws.on('message', (data: string) => {
+  ws.on('message', async (data: string) => {
     const event = eventFromMessage(data);
-    event.after({
+    await event.after({
+      clientId,
+      repository,
+      broadcast: (resp: Event) => { socketService.broadcastEvent(resp); },
       respond: (resp: Event) => { socketService.publishEvent(clientId, resp); },
     });
   });
