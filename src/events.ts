@@ -1,14 +1,17 @@
 import { Repository } from './repository';
 
-export type ServerEventType = 'joined' | 'left' | 'waiting' | 'matched' | 'opened' | 'finished' | 'error';
-export type ClientEventType = 'register' | 'ready' | 'open' | 'next';
+export type ServerEventType = 'connected' | 'left' | 'waiting' | 'matched' | 'opened' | 'finished' | 'error';
+export type ClientEventType = 'connect' | 'register' | 'ready' | 'open' | 'next';
 export type EventType = ServerEventType | ClientEventType;
 
-export type JoinedEventPayload = { token: string };
+export type ConnectedEventPayload = { token: string };
 export type WaitingEventPayload = { users: string[], readiedUsers: string[] };
 export type ErrorEventPayload = { message: string };
+export type ConnectEventPayload = { token?: string };
 export type RegisterEventPayload = { nickname: string, present: string };
-export type EventPayload = JoinedEventPayload | WaitingEventPayload | ErrorEventPayload | RegisterEventPayload;
+export type EventPayload =
+  ConnectedEventPayload | WaitingEventPayload | ErrorEventPayload |
+  ConnectEventPayload | RegisterEventPayload;
 
 export type EventMessage = {
   event: EventType,
@@ -46,9 +49,9 @@ export class Event {
 }
 
 /// Server Side Events
-export class JoinedEvent extends Event {
-  constructor(payload: JoinedEventPayload) {
-    super('joined', payload);
+export class ConnectedEvent extends Event {
+  constructor(payload: ConnectEventPayload) {
+    super('connected', payload);
   }
 }
 
@@ -79,6 +82,12 @@ export class ErrorEvent extends Event {
 }
 
 /// Client Side Events
+export class ConnectEvent extends Event {
+  constructor(payload: ConnectEventPayload) {
+    super('connect', payload);
+  }
+}
+
 export class RegisterEvent extends Event {
   constructor(payload: RegisterEventPayload) {
     super('register', payload);
@@ -117,6 +126,8 @@ export function eventFromMessage(message: string): Event {
   }
 
   switch (msgObj.event) {
+    case 'connect':
+      return new ConnectEvent(msgObj.payload as ConnectEventPayload);
     case 'register':
       return new RegisterEvent(msgObj.payload as RegisterEventPayload);
     case 'ready':

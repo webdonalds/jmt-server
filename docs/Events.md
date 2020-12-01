@@ -1,20 +1,20 @@
 # Server to Client Events
 ## List
 
-- `joined`
+- `connected`
 - `left`
 - `waiting`
 - `matched`
 - `opened`
 - `opened`
 
-### `joined`
+### `connected`
 
 신규 유저가 등록되었을 때 발생합니다.
 
 ```json
 {
-  "event": "joined",
+  "event": "connected",
   "payload": {
     "token": "string"
   }
@@ -91,10 +91,24 @@
 # Client to Server Events
 ## List
 
+- `connect`
 - `register`
 - `ready`
 - `open`
 - `next`
+
+### `connect`
+
+소켓을 등록합니다. 재접속일 경우 `token` 값을 넣어서 요청해야합니다.
+
+```json
+{
+  "event": "connect",
+  "payload": {
+    "token": "string?"
+  }
+}
+```
 
 ### `register`
 

@@ -1,45 +1,44 @@
 import crypto from 'crypto';
-import { createServer, IncomingMessage } from 'http';
-import { Socket } from 'net';
 import WebSocket, { Server } from 'ws';
-import { eventFromMessage, Event, JoinedEvent } from './events';
+import {
+  eventFromMessage, Event, ConnectEventPayload, ConnectedEvent, ErrorEvent,
+} from './events';
 import { Repository } from './repository';
 import { SocketService } from './services';
 
 const socketService = new SocketService();
 const repository = new Repository();
 
-const server = createServer();
-const wss = new Server({ noServer: true });
+const wss = new Server({ port: parseInt(process.env.PORT || '8080', 10) });
 
-server.on('upgrade', (req: IncomingMessage, socket: Socket, head: Buffer) => {
-  let clientId = req.headers['X-Client-Id'] as string;
-  const firstJoin = !clientId;
-  if (firstJoin) {
-    clientId = crypto.randomBytes(20).toString('hex');
-  }
-
-  wss.handleUpgrade(req, socket, head, (ws) => {
-    socketService.register(clientId, ws);
-    if (firstJoin) {
-      socketService.publishEvent(clientId, new JoinedEvent({ token: clientId }));
-    }
-
-    wss.emit('connection', ws, req, clientId);
-  });
-});
-
-wss.on('connection', (ws: WebSocket, _: IncomingMessage, clientId: string) => {
+function handleConnection(clientId: string, ws: WebSocket): void {
   ws.on('close', () => { socketService.unregister(clientId); });
   ws.on('message', async (data: string) => {
-    const event = eventFromMessage(data);
-    await event.after({
+    const clientEvent = eventFromMessage(data);
+    await clientEvent.after({
       clientId,
       repository,
       broadcast: (resp: Event) => { socketService.broadcastEvent(resp); },
       respond: (resp: Event) => { socketService.publishEvent(clientId, resp); },
     });
   });
-});
 
-server.listen(process.env.PORT || 8080);
+  socketService.register(clientId, ws);
+  socketService.publishEvent(clientId, new ConnectedEvent({ token: clientId }));
+}
+
+wss.on('connection', (ws: WebSocket) => {
+  ws.on('message', (data: string) => {
+    const event = eventFromMessage(data);
+    if (event.eventType !== 'connect') {
+      ws.send(new ErrorEvent({ message: 'unauthenticated socket' }).toMessage());
+      ws.close();
+      return;
+    }
+
+    ws.removeAllListeners('message');
+
+    const clientId = (event.payload as ConnectEventPayload).token || crypto.randomBytes(20).toString('hex');
+    handleConnection(clientId, ws);
+  });
+});
